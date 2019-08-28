@@ -1,6 +1,6 @@
 from cmd import Cmd
 from os import system
-import requests
+import requests, json, random
 from colorama import Fore, Back, Style
 from pyfiglet import Figlet
 f = Figlet(font='slant')
@@ -17,12 +17,10 @@ class MyPrompt(Cmd):
         else:
             print(Fore.RED, "Error; type not recognized", Style.RESET_ALL)
             return
-
         if (input("Choose Anonymity? (Y/N)").lower() in ['y', 'ye', 'yes']):
             anon = input("Transparent, Anonymous, Elite: ").lower()
             if (anon in ['transparent', 'anonymous', 'elite']):
                 url += '&anon=%s' % anon
-
         if (input("Choose Country? (Y/N)").lower() in ['y', 'ye', 'yes']):
             print("Examples: United States: US | Canada: CA | China: CN | Russia: RU")
             country = input("Country Code (Alpha 2): ").upper()
@@ -33,10 +31,22 @@ class MyPrompt(Cmd):
                     print(Fore.RED, "Country Code Not Recognized", Style.RESET_ALL)
                     return
         r = requests.get(url)
-        if (200 in r):
+        if (r.status_code == 200):
+            system('cls')
+            print(Figlet(font='slant').renderText('Interactive Proxy CLI'))
             print(Fore.GREEN, "API ONLINE", Style.RESET_ALL)
+            data = (r.text)
+            data = data.replace('b', '')
+            data = data.split('\r\n')
+            data.pop()
+            i = random.randint(0, len(data))
+            temp = data[i].split(":")
+            print("Address: %s" % temp[0])
+            print("Port: %s" % temp[1])
         else:
             print(Fore.RED, "API OFFLINE", Style.RESET_ALL)
+            return
+
         # print(r.content)
     def do_country(self, args):
         """Country Codes (Alpha 2)"""
