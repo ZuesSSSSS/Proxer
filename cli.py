@@ -32,6 +32,7 @@ class MyPrompt(Cmd):
                     return
         r = requests.get(url)
         if (r.status_code == 200):
+            output = input("Do you want more than one? (Y/N)")
             system('cls')
             print(Figlet(font='slant').renderText('Interactive Proxy CLI'))
             print(Fore.GREEN, "API ONLINE", Style.RESET_ALL)
@@ -39,10 +40,15 @@ class MyPrompt(Cmd):
             data = data.replace('b', '')
             data = data.split('\r\n')
             data.pop()
-            i = random.randint(0, len(data))
-            temp = data[i].split(":")
-            print("Address: %s" % temp[0])
-            print("Port: %s" % temp[1])
+            if (output in ['y', 'ye', 'yes']):
+                with open('proxies.txt', 'w') as f:
+                    for item in data:
+                        f.write("%s\n" % item)
+                print("Proxies.txt is updated")
+            else:
+                temp = data[random.randint(0, len(data))].split(":")
+                print("Address: %s" % temp[0])
+                print("Port: %s" % temp[1])
         else:
             print(Fore.RED, "API OFFLINE", Style.RESET_ALL)
             return
