@@ -6,4 +6,4 @@
 Run `pip install -r requirements.txt`
 
 ## Run
-Run `cli.py`
+Run `proxer.py`
