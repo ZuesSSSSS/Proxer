@@ -1,6 +1,6 @@
 # Proxer
 
-**Interactive Proxy Generator** in development
+**Interactive Proxy Generator**
 
 ## Setup
 Run `pip install -r requirements.txt`
