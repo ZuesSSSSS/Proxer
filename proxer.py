@@ -74,7 +74,30 @@ class MyPrompt(Cmd):
 
     def do_list(self, args):
         """Amount of Proxies in Countries and which Anonymity"""
-        # print("countries && check amount of proxies in that country && amount of which type (anon)")
+        url = 'https://www.proxy-list.download/api/v1/get?type='
+        types=('http','https','socks4','socks5')
+        with open("countries.txt") as textfile1, open("country_codes.txt") as textfile2:
+            print("Country (Country Code) | HTTP | HTTPS | SOCKS4 | SOCKS5")
+            for x, y in zip(textfile1, textfile2):
+                country = x.strip()
+                countryCode = y.strip()
+                tempData = {'http':0,'https':0,'socks4':0,'socks5':0}
+                i=0
+                for x in types:
+                    tempUrl = (url + x)
+                    r = requests.get(tempUrl)
+                    if (r.status_code == 200):
+                        data = (r.text)
+                        data = data.replace('b', '')
+                        data = data.split('\r\n')
+                        data.pop()
+                        tempData.update({x:len(data)})
+                        i+=1
+                        if (i == 4):
+                            print(f"{country} ({countryCode}) | {tempData['http']} | {tempData['https']} | {tempData['socks4']} | {tempData['socks5']}")
+                    if (r.status_code != 200):
+                        print(Fore.RED, "API OFFLINE", Style.RESET_ALL)
+
 
     def do_quit(self, args):
         """Quits the program"""
