@@ -40,6 +40,7 @@ class MyPrompt(Cmd):
             data = data.split('\r\n')
             data.pop()
             if (len(data) < 1):
+                print(url)
                 print(Fore.YELLOW, "No Proxies Found", Style.RESET_ALL)
                 return
             output = input("Do you want more than one? (Y/N)")
@@ -52,7 +53,11 @@ class MyPrompt(Cmd):
                         f.write("%s\n" % item)
                 print("Proxies.txt is updated")
             else:
-                temp = data[random.randint(0, len(data))].split(":")
+                if (len(data) == 1):
+                    index = 0
+                else:
+                    index = random.randint(0, len(data))
+                temp = data[index].split(":")
                 print("Address: %s" % temp[0])
                 print("Port: %s" % temp[1])
         else:
@@ -69,7 +74,6 @@ class MyPrompt(Cmd):
 
     def do_list(self, args):
         """Amount of Proxies in Countries and which Anonymity"""
-        page = int(args)
         # print("countries && check amount of proxies in that country && amount of which type (anon)")
 
     def do_quit(self, args):
