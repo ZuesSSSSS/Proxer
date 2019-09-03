@@ -1,68 +1,172 @@
 from cmd import Cmd
 from os import system
-import requests, json, random
 from colorama import Fore, Back, Style
 from pyfiglet import Figlet
-f = Figlet(font='slant')
+import requests, json, random, re, time
+
+class proxy():
+
+    yes = ['y', 'ye', 'yes']
+
+    def tryAgain():
+
+        print(Fore.YELLOW, "Try Again", Style.RESET_ALL)
+
+    def noProxies(proxyAmount):
+
+        if (proxyAmount < 1):
+            return Fore.BLUE, "No Proxies Found", Style.RESET_ALL
+
+    def saveFile(data):
+
+        amountOfProxies = 0
+        amountChoice = input("Do you want more than one proxy? (Y/N)")
+        
+        if (amountChoice in proxy.yes):
+            
+            with open('Proxies.txt', 'w') as f:
+                for item in data:
+                    amountOfProxies += 1
+                    f.write("%s\n" % item)
+            print(f"Proxies.txt is updated with {amountOfProxies} amount of proxies.")
+        else:
+            if (len(data) == 1):
+                index = 0
+            else:
+                index = random.randint(0, len(data))
+            temp = data[index].split(":")
+            print(f"Address: {temp[0]}\nPort: {temp[1]}")
+
+    @staticmethod
+    def clean():
+
+        f = Figlet(font='slant')
+
+        system('cls')
+        print(Figlet(font='slant').renderText('Interactive Proxy CLI'))
+        print(Fore.GREEN, "API ONLINE", Style.RESET_ALL)
+        
+    @staticmethod
+    def getProtocol():
+
+        options = ['Http', 'Https', 'Socks4', 'Socks5']
+        typeInput = input(f'{options} ').lower()
+
+        if (typeInput.title() in options):
+            typeChoice = f'?type={typeInput}'
+            return typeChoice
+        else:
+            print(Fore.RED, "Error; type not recognized", Style.RESET_ALL)
+            proxy.tryAgain()
+            proxy.getProtocol()
+
+    @staticmethod
+    def getAnon():
+
+        anon = input("Choose Anonymity? (Y/N)").lower()
+
+        if (anon in proxy.yes):
+            
+            options = ['Transparent', 'Anonymous', 'Elite']
+            anonInput = input(f'{options} ').lower()
+
+            if (anonInput.title() in options):
+                anonChoice = f'&anon={anonInput}'
+                return anonChoice
+            else:
+                print(Fore.MAGENTA, f"\'{anonInput}\' Not Supported", Style.RESET_ALL)
+                proxy.tryAgain()
+                proxy.getAnon()
+
+    @staticmethod
+    def getCountry():
+
+        country = input("Choose Country? (Y/N)").lower()
+
+        if (country in proxy.yes):
+
+            print("Examples: United States: US | Canada: CA | China: CN | Russia: RU")
+            countryInput = input("Country Code (Alpha 2): ").upper()
+
+            with open('country_codes.txt') as f:
+                countryFound = re.search(rf'\b{countryInput}\b', f.read())
+                if (countryFound):
+                    countryChoice = f'&country={countryInput}'
+                    return countryChoice
+                else:
+                    print(Fore.RED, "Country Code Not Recognized", Style.RESET_ALL)
+                    proxy.tryAgain()
+                    proxy.getCountry()
+
+    @staticmethod
+    def parseUrlArgs():
+
+        url = 'https://www.proxy-list.download/api/v1/get' 
+
+        urlType = proxy.getProtocol()
+        urlAnon = proxy.getAnon()
+        urlCountry = proxy.getCountry()
+
+        url += urlType
+        urlAnonExists = None
+        urlCountryExists = None
+
+
+        try:
+            urlAnon
+        except NameError: 
+            pass
+        try:
+            urlCountry
+        except NameError:
+            pass
+
+        if (urlAnonExists):
+            url += urlAnon
+        if (urlCountryExists):
+            url += urlCountry
+
+        return url
+        
+    @staticmethod
+    def checkStatus(url):
+        
+        r =  requests.get(url)
+
+        if (r.status_code == 200):
+            return True
+        else:
+            return False
+            
+    @staticmethod
+    def showProxies(url):
+
+        r = requests.get(url)
+        data = r.text
+        data = data.replace('b', '')
+        data = data.split('\r\n')
+        data.pop()
+
+        proxyAmount = len(data)
+        proxy.noProxies(proxyAmount)
+        proxy.printProxies(data)
+        return data
+      
+    def printProxies(data):
+        proxy.clean()
+        proxy.saveFile(data)
 
 class MyPrompt(Cmd):
 
     def do_proxy(self, args):
         """Interactive Proxy CLI"""
-        url = 'https://www.proxy-list.download/api/v1/get'
 
-        type = input("http, https, socks4, socks5: ").lower()
-        if (type in ['http', 'https', 'socks4', 'socks5']):
-            url += '?type=%s' % type
+        url = proxy.parseUrlArgs()
+
+        if (proxy.checkStatus(url)):
+            proxy.showProxies(url)
         else:
-            print(Fore.RED, "Error; type not recognized", Style.RESET_ALL)
-            return
-        if (input("Choose Anonymity? (Y/N)").lower() in ['y', 'ye', 'yes']):
-            anon = input("Transparent, Anonymous, Elite: ").lower()
-            if (anon in ['transparent', 'anonymous', 'elite']):
-                url += '&anon=%s' % anon
-            else:
-                print(Fore.MAGENTA, f"\'{anon}\' Not Supported", Style.RESET_ALL)
-                print(Fore.YELLOW, "--IGNORING--", Style.RESET_ALL)
-        if (input("Choose Country? (Y/N)").lower() in ['y', 'ye', 'yes']):
-            print("Examples: United States: US | Canada: CA | China: CN | Russia: RU")
-            country = input("Country Code (Alpha 2): ").upper()
-            with open('country_codes.txt',) as f:
-                if (country in f.read()):
-                    url+= '&country=%s' % country
-                else:
-                    print(Fore.RED, "Country Code Not Recognized", Style.RESET_ALL)
-                    return
-        r = requests.get(url)
-        if (r.status_code == 200):
-            data = (r.text)
-            data = data.replace('b', '')
-            data = data.split('\r\n')
-            data.pop()
-            if (len(data) < 1):
-                print(url)
-                print(Fore.YELLOW, "No Proxies Found", Style.RESET_ALL)
-                return
-            output = input("Do you want more than one? (Y/N)")
-            system('cls')
-            print(Figlet(font='slant').renderText('Interactive Proxy CLI'))
-            print(Fore.GREEN, "API ONLINE", Style.RESET_ALL)
-            if (output in ['y', 'ye', 'yes']):
-                with open('proxies.txt', 'w') as f:
-                    for item in data:
-                        f.write("%s\n" % item)
-                print("Proxies.txt is updated")
-            else:
-                if (len(data) == 1):
-                    index = 0
-                else:
-                    index = random.randint(0, len(data))
-                temp = data[index].split(":")
-                print("Address: %s" % temp[0])
-                print("Port: %s" % temp[1])
-        else:
-            print(Fore.RED, "API OFFLINE", Style.RESET_ALL)
-            return
+            return Fore.RED, "API OFFLINE", Style.RESET_ALL
 
     def do_country(self, args):
         """Country Codes (Alpha 2)"""
@@ -98,7 +202,6 @@ class MyPrompt(Cmd):
                     if (r.status_code != 200):
                         print(Fore.RED, "API OFFLINE", Style.RESET_ALL)
 
-
     def do_quit(self, args):
         """Quits the program"""
         raise SystemExit
@@ -108,4 +211,4 @@ if __name__ == '__main__':
     system('cls')
     prompt = MyPrompt()
     prompt.prompt = '> '
-    prompt.cmdloop(f.renderText('Interactive Proxy CLI'))
+    prompt.cmdloop(proxy.clean())
